@@ -50,6 +50,10 @@ def get_secret(key, default=""):
     except:
         return default
 
+# Login credentials from .env
+APP_USERNAME = os.getenv("APP_USERNAME") or get_secret("APP_USERNAME", "")
+APP_PASSWORD = os.getenv("APP_PASSWORD") or get_secret("APP_PASSWORD", "")
+
 # Initialize generators (optioneel - kan worden uitgeschakeld)
 USE_MESSAGE_GENERATOR = True
 USE_AUDIO_GENERATOR = True
@@ -131,12 +135,68 @@ st.markdown("""
             background-color: #FFFFFF;
             border: 1px solid #E0E0E0;
         }
+        .login-container {
+            max-width: 400px;
+            margin: 5rem auto;
+            padding: 2rem;
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
     </style>
 """, unsafe_allow_html=True)
 
+# Login check - only show app if logged in
+if not APP_USERNAME or not APP_PASSWORD:
+    st.warning("⚠️ Login credentials niet geconfigureerd. Voeg APP_USERNAME en APP_PASSWORD toe aan .env")
+    st.stop()
 
+# Check if user is logged in
+if 'authenticated' not in st.session_state:
+    st.session_state['authenticated'] = False
+
+# Show login form if not authenticated
+if not st.session_state['authenticated']:
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    
+    # Show Sinterklaas image if available
+    image_path = Path(__file__).parent / "sint.png"
+    if image_path.exists():
+        st.image(str(image_path), use_container_width=True)
+    
+    st.markdown("## 🔐 Login")
+    st.markdown("Voer je inloggegevens in om de Sinterklaas app te gebruiken.")
+    
+    with st.form("login_form"):
+        username = st.text_input("Gebruikersnaam", placeholder="Voer je gebruikersnaam in")
+        password = st.text_input("Wachtwoord", type="password", placeholder="Voer je wachtwoord in")
+        submitted = st.form_submit_button("Inloggen", use_container_width=True, type="primary")
+        
+        if submitted:
+            if username == APP_USERNAME and password == APP_PASSWORD:
+                st.session_state['authenticated'] = True
+                st.success("✅ Ingelogd!")
+                st.rerun()
+            else:
+                st.error("❌ Onjuiste gebruikersnaam of wachtwoord")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
+
+# User is authenticated - show the app
 # Title
 st.markdown("# Sinterklaas Boodschap Generator")
+
+# Logout button
+col1, col2, col3 = st.columns([1, 1, 1])
+with col3:
+    if st.button("🚪 Uitloggen", use_container_width=True):
+        st.session_state['authenticated'] = False
+        st.session_state.pop('app_mode', None)
+        st.session_state.pop('sinterklaas_tekst', None)
+        st.session_state.pop('sinterklaas_tekst_aangepast', None)
+        st.session_state.pop('genereer_media', None)
+        st.rerun()
 
 # Check for Sinterklaas image
 image_path = Path(__file__).parent / "sint.png"

@@ -54,8 +54,12 @@ sudo apt-get install ffmpeg
 cp .env.template .env
 ```
 
-6. **Vul je API keys in het `.env` bestand:**
+6. **Vul je API keys en login credentials in het `.env` bestand:**
 ```env
+# Login credentials (vereist)
+APP_USERNAME=je-gebruikersnaam
+APP_PASSWORD=je-wachtwoord
+
 # Vereist voor tekst generatie
 OPENAI_API_KEY=sk-...
 
