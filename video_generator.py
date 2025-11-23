@@ -2,9 +2,6 @@ import os
 import tempfile
 import time
 import json
-import http.client
-import ssl
-import uuid
 import requests
 from pathlib import Path
 from typing import Optional
@@ -102,106 +99,62 @@ class VideoGenerator:
                     pass
     
     def _upload_asset_from_file(self, file_path: str, content_type: str, asset_type: str) -> Optional[str]:
-        """Upload een bestand naar HeyGen via http.client."""
+        """Upload een bestand naar HeyGen via requests library (gebaseerd op officiële voorbeeldcode)."""
         filename = os.path.basename(file_path)
-        field_names = ["content", "file", "asset", "data"]
         
-        # Read file
-        try:
-            with open(file_path, "rb") as f:
-                file_content = f.read()
-            file_size = len(file_content)
-            st.write(f"🛠️ Debug: {asset_type} bestand gelezen: {file_size} bytes")
-            st.write(f"🛠️ Debug: Eerste 10 bytes (hex): {file_content[:10].hex()}")
-        except Exception as e:
-            st.error(f"❌ Kon {asset_type} bestand niet lezen: {e}")
+        # Controleer of bestand bestaat
+        if not os.path.exists(file_path):
+            st.error(f"❌ Kon {asset_type} bestand niet vinden: {file_path}")
             return None
         
-        # Try different field names
-        for attempt, field_name in enumerate(field_names, 1):
-            st.write(f"🛠️ Debug: Poging {attempt}/{len(field_names)} - field name: '{field_name}'")
-            
-            boundary = f"----WebKitFormBoundary{uuid.uuid4().hex[:16]}"
-            body_parts = [
-                f"--{boundary}\r\n".encode('utf-8'),
-                f'Content-Disposition: form-data; name="{field_name}"; filename="{filename}"\r\n'.encode('utf-8'),
-                f'Content-Type: {content_type}\r\n'.encode('utf-8'),
-                b'\r\n',
-                file_content,
-                f"\r\n--{boundary}--\r\n".encode('utf-8')
-            ]
-            payload = b''.join(body_parts)
-            
-            context = ssl._create_unverified_context()
-            conn = http.client.HTTPSConnection("upload.heygen.com", context=context)
+        try:
+            # Gebruik de officiële API endpoint en 'file' als field name (zoals in voorbeeldcode)
+            upload_url = "https://api.heygen.com/v1/asset"
             headers = {
-                'X-Api-Key': self.api_key,
-                'Content-Type': f'multipart/form-data; boundary={boundary}',
-                'Content-Length': str(len(payload))
+                'X-Api-Key': self.api_key
             }
             
-            try:
-                conn.request("POST", "/v1/asset", payload, headers)
-                res = conn.getresponse()
-                data = res.read()
-                response_text = data.decode("utf-8")
+            # Open bestand als binaire stream en upload (zoals in voorbeeldcode)
+            with open(file_path, 'rb') as f:
+                files = {
+                    'file': (filename, f, content_type)
+                }
                 
-                st.write(f"🛠️ Debug: Response status: {res.status}")
+                st.write(f"🛠️ Bezig met uploaden van {filename}...")
+                response = requests.post(upload_url, headers=headers, files=files, timeout=60)
+            
+            if response.status_code == 200:
+                json_data = response.json()
+                if "data" in json_data and "id" in json_data["data"]:
+                    asset_id = json_data["data"]["id"]
+                    st.success(f"✅ {asset_type} succesvol geüpload! Asset ID: {asset_id}")
+                    return asset_id
+                else:
+                    st.error(f"❌ Onverwacht antwoord: {json_data}")
+                    return None
+            else:
+                error_text = response.text[:200]
+                st.error(f"❌ Upload mislukt (status {response.status_code}): {error_text}")
+                return None
                 
-                if res.status == 200:
-                    json_data = json.loads(response_text)
-                    if "data" in json_data and "id" in json_data["data"]:
-                        asset_id = json_data["data"]["id"]
-                        st.success(f"✅ {asset_type} succesvol geüpload! Asset ID: {asset_id} (field name: '{field_name}')")
-                        conn.close()
-                        return asset_id
-                    else:
-                        st.warning(f"⚠️ Onverwacht antwoord bij poging {attempt}: {json_data}")
-                elif res.status == 400:
-                    st.write(f"⚠️ Poging {attempt} gefaald (400): {response_text[:100]}")
-                    if attempt < len(field_names):
-                        conn.close()
-                        continue
-                    else:
-                        st.error(f"❌ Alle pogingen gefaald. Laatste response: {response_text}")
-                        conn.close()
-                        return None
-                else:
-                    st.write(f"⚠️ Poging {attempt} gefaald (status {res.status}): {response_text[:100]}")
-                    if attempt < len(field_names):
-                        conn.close()
-                        continue
-                    else:
-                        st.error(f"❌ Alle pogingen gefaald. Laatste response: {response_text}")
-                        conn.close()
-                        return None
-            except json.JSONDecodeError as e:
-                st.write(f"⚠️ Kon response niet parsen als JSON bij poging {attempt}: {e}")
-                if attempt < len(field_names):
-                    conn.close()
-                    continue
-                else:
-                    st.error(f"❌ Alle pogingen gefaald.")
-                    conn.close()
-                    return None
-            except Exception as e:
-                st.write(f"⚠️ Fout bij poging {attempt}: {str(e)[:100]}")
-                if attempt < len(field_names):
-                    conn.close()
-                    continue
-                else:
-                    st.error(f"❌ Alle pogingen gefaald: {e}")
-                    conn.close()
-                    return None
-            finally:
-                if not conn.sock is None:
-                    conn.close()
-        
-        return None
+        except FileNotFoundError as e:
+            st.error(f"❌ Bestand niet gevonden: {e}")
+            return None
+        except requests.exceptions.RequestException as e:
+            st.error(f"❌ Fout bij uploaden: {str(e)[:200]}")
+            return None
+        except Exception as e:
+            st.error(f"❌ Onverwachte fout bij uploaden: {str(e)[:200]}")
+            return None
     
     def _start_generation(self, audio_asset_id: str, character_config: dict) -> Optional[str]:
-        """Start video generatie."""
+        """Start video generatie (gebaseerd op officiële voorbeeldcode)."""
         generate_url = "https://api.heygen.com/v2/video/generate"
+        
+        # Voeg scale toe aan character config als het een avatar is (zoals in voorbeeldcode)
+        if character_config.get("type") == "avatar" and "scale" not in character_config:
+            character_config["scale"] = 1.0
+        
         payload = {
             "video_inputs": [
                 {
@@ -212,10 +165,10 @@ class VideoGenerator:
                     }
                 }
             ],
-            "test": False,
+            "test": False,  # Zet op False voor watermerk-vrije video (verbruikt credits)
             "dimension": {
-                "width": 1280,
-                "height": 720
+                "width": 1920,  # HD kwaliteit (zoals in voorbeeldcode)
+                "height": 1080
             }
         }
         
@@ -225,41 +178,51 @@ class VideoGenerator:
         }
         
         try:
+            st.write("🛠️ Video generatie verzoek sturen...")
             response = requests.post(generate_url, headers=headers, json=payload)
-            if response.status_code != 200:
-                st.error(f"❌ HeyGen Generate Fout: {response.text}")
+            
+            if response.status_code == 200:
+                json_data = response.json()
+                video_id = json_data["data"]["video_id"]
+                st.write(f"✅ Video wordt gemaakt! Video ID: {video_id}")
+                return video_id
+            else:
+                st.error(f"❌ Video generatie mislukt: {response.text}")
                 return None
-            return response.json()["data"]["video_id"]
         except Exception as e:
             st.error(f"❌ Fout bij starten generatie: {e}")
             return None
     
     def _poll_for_completion(self, video_id: str) -> Optional[str]:
-        """Poll voor video completion."""
-        status_url = "https://api.heygen.com/v1/video_status.get"
+        """Poll voor video completion (gebaseerd op officiële voorbeeldcode)."""
+        status_url = f"https://api.heygen.com/v1/video_status.get?video_id={video_id}"
+        headers = {"X-Api-Key": self.api_key}
         progress_bar = st.progress(0)
+        
+        st.write("🛠️ Wachten op renderen...")
         
         while True:
             try:
-                resp = requests.get(
-                    f"{status_url}?video_id={video_id}",
-                    headers={"X-Api-Key": self.api_key}
-                )
-                data = resp.json()["data"]
+                response = requests.get(status_url, headers=headers)
+                json_data = response.json()
+                data = json_data["data"]
                 status = data["status"]
                 
                 if status == "completed":
                     progress_bar.progress(100)
-                    return data["video_url"]
+                    video_url = data["video_url"]
+                    st.success(f"✅ Klaar! Video URL: {video_url}")
+                    return video_url
                 elif status == "failed":
-                    st.error(f"❌ Video generatie mislukt: {data.get('error')}")
+                    error_msg = data.get('error', 'Onbekende fout')
+                    st.error(f"❌ Renderen is mislukt: {error_msg}")
                     return None
                 elif status in ["processing", "pending"]:
-                    st.text(f"Status: {status}...")
-                    time.sleep(3)
+                    st.text(f"Status: {status}... even wachten")
+                    time.sleep(5)  # Wacht 5 seconden (zoals in voorbeeldcode)
                 else:
                     st.warning(f"Onbekende status: {status}")
-                    time.sleep(3)
+                    time.sleep(5)
             except Exception as e:
                 st.error(f"Fout tijdens wachten: {e}")
                 return None

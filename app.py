@@ -181,6 +181,10 @@ if app_mode == 'manual':
         generate_video = False
         if USE_VIDEO_GENERATOR:
             generate_video = st.checkbox("🎥 Video genereren (HeyGen Ultra Quality)", value=False, key="manual_output_video")
+            # Video vereist audio, dus als video is geselecteerd, audio ook inschakelen
+            if generate_video and not generate_audio:
+                st.info("ℹ️ Audio wordt automatisch gegenereerd voor video.")
+                generate_audio = True
         generate_letter = st.checkbox("✉️ Brief genereren", value=True, key="manual_output_letter")
         
         # Button to generate selected outputs
@@ -202,7 +206,8 @@ if app_mode == 'manual':
         
         if st.button(output_text, type="primary", use_container_width=True, disabled=len(outputs) == 0):
             # Store selected outputs in session state
-            st.session_state['generate_audio'] = generate_audio
+            # Als video is geselecteerd, audio ook inschakelen
+            st.session_state['generate_audio'] = generate_audio or generate_video
             st.session_state['generate_video'] = generate_video
             st.session_state['generate_letter'] = generate_letter
             st.session_state['genereer_media'] = True
@@ -304,6 +309,10 @@ if app_mode == 'auto' and st.session_state.get('sinterklaas_tekst'):
         generate_video = False
         if USE_VIDEO_GENERATOR:
             generate_video = st.checkbox("🎥 Video genereren (HeyGen Ultra Quality)", value=False, key="output_video")
+            # Video vereist audio, dus als video is geselecteerd, audio ook inschakelen
+            if generate_video and not generate_audio:
+                st.info("ℹ️ Audio wordt automatisch gegenereerd voor video.")
+                generate_audio = True
         generate_letter = st.checkbox("✉️ Brief genereren", value=True, key="output_letter")
         
         # Button to generate selected outputs
@@ -325,7 +334,8 @@ if app_mode == 'auto' and st.session_state.get('sinterklaas_tekst'):
         
         if st.button(output_text, type="primary", use_container_width=True, disabled=len(outputs) == 0):
             # Store selected outputs in session state
-            st.session_state['generate_audio'] = generate_audio
+            # Als video is geselecteerd, audio ook inschakelen
+            st.session_state['generate_audio'] = generate_audio or generate_video
             st.session_state['generate_video'] = generate_video
             st.session_state['generate_letter'] = generate_letter
             st.session_state['genereer_media'] = True
@@ -339,9 +349,14 @@ if st.session_state.get('genereer_media', False):
     if not final_tekst:
         st.error("❌ Geen tekst beschikbaar om audio, video en brief te genereren.")
     else:
-        # Generate audio if selected
+        # Generate audio if selected OR if video is selected (video requires audio)
         audio_bytes = None
         generate_audio = st.session_state.get('generate_audio', True)
+        generate_video = st.session_state.get('generate_video', False) and USE_VIDEO_GENERATOR
+        # Video vereist audio, dus audio altijd genereren als video wordt gegenereerd
+        if generate_video:
+            generate_audio = True
+        
         if generate_audio:
             with st.spinner("🎤 Sinterklaas spreekt..."):
                 if not audio_gen:
@@ -364,7 +379,7 @@ if st.session_state.get('genereer_media', False):
                             st.warning(f"⚠️ **Audio generatie fout**\n\n*Fout: {error_msg[:150]}*")
         
         # Handle video generation if selected and enabled
-        generate_video = st.session_state.get('generate_video', False) and USE_VIDEO_GENERATOR
+        # generate_video is al hierboven gedefinieerd
         if generate_video:
             if not audio_bytes:
                 st.warning("⚠️ Audio is vereist voor video generatie. Genereer eerst audio.")
@@ -484,24 +499,22 @@ if st.session_state.get('genereer_media', False):
                         tmp_html_path = tmp_html.name
                     
                     try:
-                        # Use Playwright to generate PDF
-                        # Letter dimensions: 1696x2528 pixels (exact PNG size)
+                        # Use Playwright to generate PDF in A4 format
                         with sync_playwright() as p:
                             browser = p.chromium.launch(headless=True)
-                            # Set viewport to EXACT letter dimensions (no scaling)
-                            page = browser.new_page(viewport={'width': 1696, 'height': 2528}, device_scale_factor=1)
+                            # Set viewport to A4 dimensions (210mm x 297mm at 96 DPI ≈ 794x1123px)
+                            page = browser.new_page(viewport={'width': 794, 'height': 1123}, device_scale_factor=1)
                             page.goto(f"file://{tmp_html_path}")
                             # Wait for fonts and images to load
                             page.wait_for_load_state('networkidle')
-                            page.wait_for_timeout(1500)  # Extra time for fonts
-                            # Generate PDF with exact dimensions - no scaling
+                            page.wait_for_timeout(2000)  # Extra time for fonts to load
+                            # Generate PDF in A4 format with proper scaling
                             pdf_bytes = page.pdf(
-                                width='1696px',
-                                height='2528px',
+                                format='A4',
                                 print_background=True,
                                 margin={'top': '0', 'right': '0', 'bottom': '0', 'left': '0'},
                                 scale=1.0,
-                                prefer_css_page_size=False  # Use explicit width/height
+                                prefer_css_page_size=True  # Use CSS @page size
                             )
                             browser.close()
                         
@@ -520,9 +533,7 @@ if st.session_state.get('genereer_media', False):
                     st.info("💡 **PDF download beschikbaar** - Installeer `playwright` voor PDF download functionaliteit: `pip install playwright && playwright install chromium`")
                 except Exception as pdf_error:
                     st.warning(f"⚠️ PDF generatie mislukt: {str(pdf_error)[:200]}")
-                    st.info("💡 Probeer: `pip install playwright && playwright install chromium` of gebruik de browser print functie (rechtsklik → Print)")
-                
-                st.caption("Tip: Klik met de rechtermuisknop om de brief op te slaan of af te drukken.")
+                    st.info("💡 Probeer: `pip install playwright && playwright install chromium`")
         
         # Reset flag
         st.session_state['genereer_media'] = False

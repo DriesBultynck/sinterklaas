@@ -148,19 +148,6 @@ class LetterGenerator:
         display: flex;
         flex-direction: column;
     }}
-    /* PDF specific - ensure exact rendering */
-    @media print {{
-        .letter-container {{
-            width: 1696px !important;
-            height: 2528px !important;
-            max-height: 2528px !important;
-            font-size: 24px !important;
-            padding: 200px 80px 60px 80px !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            overflow: hidden !important;
-        }}
-    }}
     .letter-container p {{
         margin-bottom: 0.8em;
         text-align: justify;
@@ -178,28 +165,52 @@ class LetterGenerator:
             padding: calc(200px * (100vw / 1696px)) calc(80px * (100vw / 1696px)) calc(60px * (100vw / 1696px)) calc(80px * (100vw / 1696px));
         }}
     }}
-    /* PDF/Print: Force exact dimensions and styling */
+    /* A4 Print styling - optimized for A4 paper */
     @page {{
-        size: 1696px 2528px;
+        size: A4;
         margin: 0;
     }}
     @media print {{
+        body {{
+            margin: 0;
+            padding: 0;
+        }}
+        .letter-container {{
+            width: 210mm !important;
+            height: 297mm !important;
+            max-width: 210mm !important;
+            max-height: 297mm !important;
+            padding: 25mm 20mm 15mm 20mm !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            overflow: hidden !important;
+            background-size: 100% 100% !important;
+            font-size: 24pt !important;
+            page-break-inside: avoid !important;
+        }}
         .letter-container p {{
-            font-size: 24px !important;
-            margin-bottom: 0.8em !important;
+            font-size: 24pt !important;
+            margin-bottom: 0.6em !important;
+            line-height: 1.5 !important;
         }}
         .greeting {{
-            font-size: 24px !important;
-            margin-bottom: 1.5em !important;
+            font-size: 24pt !important;
+            margin-bottom: 1em !important;
         }}
         .closing {{
-            font-size: 24px !important;
+            font-size: 24pt !important;
+            margin-top: 1.5em !important;
         }}
         .signature-line {{
-            font-size: 24px !important;
+            font-size: 24pt !important;
         }}
         .signature-name {{
-            font-size: 36px !important;
+            font-size: 30pt !important;
+        }}
+        .letter-date {{
+            top: 15mm !important;
+            right: 20mm !important;
+            font-size: 21pt !important;
         }}
     }}
     .letter-date {{
