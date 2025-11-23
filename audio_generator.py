@@ -2,6 +2,24 @@ import io
 from typing import Optional
 from elevenlabs.client import ElevenLabs
 import openai
+
+# Workaround voor audioop/pyaudioop import issues
+# pydub gebruikt audioop intern, maar sommige versies proberen pyaudioop te importeren
+try:
+    import audioop
+    # Maak audioop beschikbaar als pyaudioop voor backwards compatibility
+    import sys
+    if 'pyaudioop' not in sys.modules:
+        sys.modules['pyaudioop'] = audioop
+except ImportError:
+    # Als audioop niet beschikbaar is (Python 3.13+), probeer alternatieven
+    try:
+        import pyaudioop as audioop
+        import sys
+        sys.modules['audioop'] = audioop
+    except ImportError:
+        audioop = None
+
 from pydub import AudioSegment
 
 
