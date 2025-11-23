@@ -2,6 +2,7 @@ import io
 from typing import Optional
 from elevenlabs.client import ElevenLabs
 import openai
+from pydub import AudioSegment
 
 
 class AudioGenerator:
@@ -86,7 +87,8 @@ class AudioGenerator:
             audio_bytes.write(chunk)
         audio_bytes.seek(0)
         
-        return audio_bytes
+        # Voeg 1-2 seconden stilte toe aan het einde
+        return self._add_silence_padding(audio_bytes)
     
     def _generate_openai(self, text: str) -> io.BytesIO:
         """Genereer audio met OpenAI TTS."""
@@ -102,5 +104,41 @@ class AudioGenerator:
         
         audio_bytes = io.BytesIO(audio_response.content)
         audio_bytes.seek(0)
-        return audio_bytes
+        
+        # Voeg 1-2 seconden stilte toe aan het einde
+        return self._add_silence_padding(audio_bytes)
+    
+    def _add_silence_padding(self, audio_bytes: io.BytesIO, padding_seconds: float = 1.5) -> io.BytesIO:
+        """
+        Voeg stilte toe aan het einde van een audio bestand.
+        
+        Args:
+            audio_bytes: Audio bytes als io.BytesIO object
+            padding_seconds: Aantal seconden stilte om toe te voegen (standaard 1.5 seconden)
+        
+        Returns:
+            Audio bytes met stilte toegevoegd aan het einde
+        """
+        try:
+            # Laad audio van bytes
+            audio_bytes.seek(0)
+            audio = AudioSegment.from_mp3(audio_bytes)
+            
+            # Maak stilte (in milliseconden)
+            silence = AudioSegment.silent(duration=int(padding_seconds * 1000))
+            
+            # Voeg stilte toe aan het einde
+            audio_with_padding = audio + silence
+            
+            # Converteer terug naar bytes
+            output_bytes = io.BytesIO()
+            audio_with_padding.export(output_bytes, format="mp3")
+            output_bytes.seek(0)
+            
+            return output_bytes
+        except Exception as e:
+            # Als pydub niet werkt, retourneer originele audio
+            print(f"Waarschuwing: Kon geen stilte toevoegen aan audio: {e}")
+            audio_bytes.seek(0)
+            return audio_bytes
 

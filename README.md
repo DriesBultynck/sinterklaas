@@ -37,12 +37,24 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-4. **Maak een `.env` bestand aan:**
+4. **Installeer ffmpeg (vereist voor audio padding):**
+```bash
+# macOS
+brew install ffmpeg
+
+# Ubuntu/Debian
+sudo apt-get install ffmpeg
+
+# Windows
+# Download van https://ffmpeg.org/download.html
+```
+
+5. **Maak een `.env` bestand aan:**
 ```bash
 cp .env.template .env
 ```
 
-5. **Vul je API keys in het `.env` bestand:**
+6. **Vul je API keys in het `.env` bestand:**
 ```env
 # Vereist voor tekst generatie
 OPENAI_API_KEY=sk-...
@@ -134,6 +146,7 @@ sinterklaas/
 - **ElevenLabs**: Hoge kwaliteit, meertalig (eleven_multilingual_v2)
 - **OpenAI TTS**: Fallback optie (tts-1-hd, voice: onyx)
 - Automatische fallback als ElevenLabs niet beschikbaar is
+- **Audio padding**: Voegt automatisch 1.5 seconden stilte toe aan het einde voor volledige downloads
 
 ### Video Generatie
 - HeyGen Ultra Quality talking photo
@@ -159,6 +172,9 @@ De app valt automatisch terug op OpenAI TTS.
 
 ### HeyGen video upload fout
 Controleer of je API key correct is en of je avatar ID geldig is.
+
+### Audio padding werkt niet
+Zorg ervoor dat ffmpeg geïnstalleerd is. Zie installatie instructies hierboven.
 
 ## 📝 Licentie
 

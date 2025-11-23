@@ -5,6 +5,7 @@ import io
 from pathlib import Path
 import pandas as pd
 import random
+from datetime import datetime
 
 # Import de nieuwe klassen
 from message_generator import MessageGenerator
@@ -400,12 +401,30 @@ if st.session_state.get('genereer_media', False):
                                     st.markdown("### 🎵 Luister naar Sinterklaas")
                                     audio_bytes.seek(0)
                                     st.audio(audio_bytes, format="audio/mp3", autoplay=False)
+                                    # Download button voor audio
+                                    audio_bytes.seek(0)
+                                    st.download_button(
+                                        label="📥 Download Audio",
+                                        data=audio_bytes.getvalue() if hasattr(audio_bytes, 'getvalue') else audio_bytes.read(),
+                                        file_name=f"sinterklaas_audio_{st.session_state.get('naam', 'kind')}_{datetime.now().strftime('%Y%m%d')}.mp3",
+                                        mime="audio/mpeg",
+                                        use_container_width=True
+                                    )
                             else:
                                 st.warning("⚠️ Video generatie mislukt.")
                                 if generate_audio and audio_bytes:
                                     st.markdown("### 🎵 Luister naar Sinterklaas")
                                     audio_bytes.seek(0)
                                     st.audio(audio_bytes, format="audio/mp3", autoplay=False)
+                                    # Download button voor audio
+                                    audio_bytes.seek(0)
+                                    st.download_button(
+                                        label="📥 Download Audio",
+                                        data=audio_bytes.getvalue() if hasattr(audio_bytes, 'getvalue') else audio_bytes.read(),
+                                        file_name=f"sinterklaas_audio_{st.session_state.get('naam', 'kind')}_{datetime.now().strftime('%Y%m%d')}.mp3",
+                                        mime="audio/mpeg",
+                                        use_container_width=True
+                                    )
                         except Exception as video_error:
                             st.error(f"❌ HeyGen video generatie mislukt: {str(video_error)}")
                             if generate_audio and audio_bytes:
@@ -413,6 +432,15 @@ if st.session_state.get('genereer_media', False):
                                 st.markdown("### 🎵 Luister naar Sinterklaas")
                                 audio_bytes.seek(0)
                                 st.audio(audio_bytes, format="audio/mp3", autoplay=False)
+                                # Download button voor audio
+                                audio_bytes.seek(0)
+                                st.download_button(
+                                    label="📥 Download Audio",
+                                    data=audio_bytes.getvalue() if hasattr(audio_bytes, 'getvalue') else audio_bytes.read(),
+                                    file_name=f"sinterklaas_audio_{st.session_state.get('naam', 'kind')}_{datetime.now().strftime('%Y%m%d')}.mp3",
+                                    mime="audio/mpeg",
+                                    use_container_width=True
+                                )
         
         # Show audio player if audio was generated but video was not
         if generate_audio and audio_bytes and not generate_video:
@@ -422,6 +450,15 @@ if st.session_state.get('genereer_media', False):
             st.markdown("### 🎵 Luister naar Sinterklaas")
             audio_bytes.seek(0)
             st.audio(audio_bytes, format="audio/mp3", autoplay=False)
+            # Download button voor audio
+            audio_bytes.seek(0)
+            st.download_button(
+                label="📥 Download Audio",
+                data=audio_bytes.getvalue() if hasattr(audio_bytes, 'getvalue') else audio_bytes.read(),
+                file_name=f"sinterklaas_audio_{st.session_state.get('naam', 'kind')}_{datetime.now().strftime('%Y%m%d')}.mp3",
+                mime="audio/mpeg",
+                use_container_width=True
+            )
         
         # Render the parchment-style letter if selected
         generate_letter = st.session_state.get('generate_letter', True)
