@@ -6,6 +6,33 @@ from pathlib import Path
 import pandas as pd
 import random
 from datetime import datetime
+import subprocess
+from playwright.sync_api import sync_playwright
+
+# Deze functie draait maar 1x per sessie/reboot
+@st.cache_resource
+def install_playwright_browser():
+    print("Installing Playwright Chromium...")
+    # We installeren alleen chromium om ruimte te besparen
+    subprocess.run(["playwright", "install", "chromium"])
+
+try:
+    # Probeer de installatie te draaien
+    install_playwright_browser()
+except Exception as e:
+    st.error(f"Fout bij installatie browser: {e}")
+
+def run_scraper():
+    with sync_playwright() as p:
+        # Headless MOET True zijn op Streamlit Cloud
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        
+        page.goto("https://example.com")
+        title = page.title()
+        
+        browser.close()
+        return title
 
 # Import de nieuwe klassen
 from message_generator import MessageGenerator
