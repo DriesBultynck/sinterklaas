@@ -125,7 +125,13 @@ class LetterGenerator:
         
         return f"""
     <style>
+    /* Load Google Fonts with fallback */
     @import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Herr+Von+Muellerhoff&display=swap');
+    
+    /* Ensure fonts are loaded before rendering */
+    .letter-container {{
+        font-display: swap;
+    }}
     .letter-container {{
         background-image: url('{background_image_url}');
         background-size: 100% 100%;
@@ -136,7 +142,7 @@ class LetterGenerator:
         aspect-ratio: 1696 / 2528;
         padding: 200px 80px 60px 80px;
         color: #3b2f2f;
-        font-family: 'Pinyon Script', cursive;
+        font-family: 'Pinyon Script', 'Georgia', 'Times New Roman', serif;
         font-size: 24px;
         line-height: 1.4;
         position: relative;
@@ -219,7 +225,7 @@ class LetterGenerator:
         right: 80px;
         font-size: 18px;
         color: #3b2f2f;
-        font-family: 'Pinyon Script', cursive;
+        font-family: 'Pinyon Script', 'Georgia', 'Times New Roman', serif;
     }}
     /* Responsive date for web display */
     @media (max-width: 1800px) {{
@@ -251,9 +257,10 @@ class LetterGenerator:
     .signature-name {{
         margin-bottom: 0;
         text-align: right;
-        font-family: 'Herr Von Muellerhoff', cursive;
+        font-family: 'Herr Von Muellerhoff', 'Georgia', 'Times New Roman', serif;
         font-size: 36px;
         color: #8B0000;
+        font-weight: bold;
     }}
     .signature-area {{
         margin-top: 40px;
@@ -261,10 +268,11 @@ class LetterGenerator:
         position: relative;
     }}
     .sint-signature {{
-        font-family: 'Herr Von Muellerhoff', cursive;
+        font-family: 'Herr Von Muellerhoff', 'Georgia', 'Times New Roman', serif;
         font-size: 50px;
         color: #8B0000;
         margin-right: 20px;
+        font-weight: bold;
     }}
     .seal-image {{
         position: absolute;
