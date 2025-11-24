@@ -112,6 +112,12 @@ st.set_page_config(
 # Custom CSS styling - Lichte interface
 st.markdown("""
     <style>
+        /* Standaard Arial font voor de hele UI */
+        body, .stApp, .main, .block-container, 
+        .stTextInput, .stNumberInput, .stSelectbox, .stTextArea,
+        .stButton, .stCheckbox, .stRadio, .stForm, p, span, div, label {
+            font-family: Arial, Helvetica, sans-serif !important;
+        }
         .stApp {
             background: linear-gradient(135deg, #F5F5F5 0%, #FFFFFF 100%);
             background-attachment: fixed;
@@ -126,7 +132,10 @@ st.markdown("""
         h1 {
             color: #C41E3A;
             text-align: center;
-            font-family: 'Georgia', serif;
+            font-family: Arial, Helvetica, sans-serif !important;
+        }
+        h2, h3, h4, h5, h6 {
+            font-family: Arial, Helvetica, sans-serif !important;
         }
         .stTextInput > div > div > input,
         .stNumberInput > div > div > input,
@@ -134,6 +143,7 @@ st.markdown("""
         .stTextArea > div > div > textarea {
             background-color: #FFFFFF;
             border: 1px solid #E0E0E0;
+            font-family: Arial, Helvetica, sans-serif !important;
         }
         .login-container {
             max-width: 400px;
