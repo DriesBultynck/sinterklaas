@@ -4,14 +4,32 @@ __pycache__/
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.env.local
+.venv
 env/
 venv/
 ENV/
-.venv
-
-# Environment variables
-.env
-.env.local
+env.bak/
+venv.bak/
 
 # IDE
 .vscode/
@@ -22,12 +40,32 @@ ENV/
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Streamlit
-.streamlit/secrets.toml
-
-# Temporary files
-*.tmp
+# Logs
 *.log
 
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Generated outputs (audio, video, PDFs)
+outputs/
+generated/
+*.mp3
+*.mp4
+*.wav
+*.pdf
+
+# Streamlit
+.streamlit/
+
+# Playwright
+.playwright/
